@@ -131,9 +131,12 @@ describe('System settings navigation', () => {
       ],
     ]);
     const denied = new Set(
-      ['settingsUsers', 'settingsRoles', 'settingsDefaultAccess'].map((name) =>
-        routeKey(find(routes, name)),
-      ),
+      [
+        'settingsUsers',
+        'settingsRoles',
+        'settingsDefaultAccess',
+        'settingsSharingRules',
+      ].map((name) => routeKey(find(routes, name))),
     );
     expect(catalog(routes, denied)).toEqual([]);
     // Without a module to open, the sidebar entry disappears too.
@@ -219,6 +222,13 @@ describe('System settings navigation', () => {
     ]).routes;
     expect(catalog(routes)).toEqual([
       [
+        'settingsAccount',
+        [
+          ['settingsUsers', '/settings/users'],
+          ['permissionManagement', '/settings/roles'],
+        ],
+      ],
+      [
         'settingsSystem',
         [
           ['notificationManagement', '/settings/notifications/templates'],
@@ -228,7 +238,7 @@ describe('System settings navigation', () => {
     ]);
     expect(
       buildRouteNavigation(routes, new Set()).map(({ route }) => route.name),
-    ).toEqual(['home', 'settingsHome']);
+    ).toEqual(['home', 'materialManagement', 'settingsHome']);
   });
 });
 
@@ -248,7 +258,35 @@ it('places database browsing in System and hides its card when access is denied'
     action: 'access',
   });
   expect(catalog(routes)).toEqual([
+    [
+      'settingsAccount',
+      [
+        ['settingsUsers', '/settings/users'],
+        ['permissionManagement', '/settings/roles'],
+      ],
+    ],
     ['settingsSystem', [['databaseExplorer', '/settings/database-explorer']]],
   ]);
-  expect(catalog(routes, new Set([routeKey(page)]))).toEqual([]);
+  expect(catalog(routes, new Set([routeKey(page)]))).toEqual([
+    [
+      'settingsAccount',
+      [
+        ['settingsUsers', '/settings/users'],
+        ['permissionManagement', '/settings/roles'],
+      ],
+    ],
+  ]);
+  const denied = new Set(
+    [
+      'settingsUsers',
+      'settingsRoles',
+      'settingsDefaultAccess',
+      'settingsSharingRules',
+      'databaseExplorer',
+    ].map((name) => routeKey(find(routes, name))),
+  );
+  expect(catalog(routes, denied)).toEqual([]);
+  expect(
+    buildRouteNavigation(routes, denied).map(({ route }) => route.name),
+  ).toEqual(['home', 'materialManagement']);
 });

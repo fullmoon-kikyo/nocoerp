@@ -34,11 +34,26 @@ export interface PermissionWorkspaceSelection {
 
 /** Add only business operations and configuration controls this application exposes. */
 export const permissionWorkspaceSelection: PermissionWorkspaceSelection = {
-  business: [],
+  business: [
+    {
+      type: 'composite',
+      id: 'masterData.categories',
+      actions: ['view', 'create', 'edit', 'move', 'delete', 'import', 'export', 'comment'],
+    },
+    {
+      type: 'composite',
+      id: 'masterData.materials',
+      actions: ['view', 'create', 'edit'],
+    },
+  ],
   settings: [
     {
       id: 'authorization.permission-sets',
       actions: ['read', 'create', 'update'],
+    },
+    {
+      id: 'authorization.sharing-rules',
+      actions: ['read', 'create', 'update', 'delete'],
     },
     {
       id: 'authorization.default-access',

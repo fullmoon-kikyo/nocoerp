@@ -1,4 +1,4 @@
-import { Users, ShieldCheck, KeyRound, ListFilter } from 'lucide-react';
+import { Users, ShieldCheck, KeyRound, ListFilter, Share2 } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -135,6 +135,38 @@ const systemSettingsRoutes: AppClientRouteContribution = defineAppRoutes([
             breadcrumb: { title: 'settings.defaultAccess.edit' },
             presentation: { kind: 'child-page' },
             componentLoader: () => import('./default-access-form.js'),
+          },
+        ],
+      },
+      {
+        name: 'settingsSharingRules',
+        path: '/sharing-rules',
+        auth: 'required',
+        authz: {
+          resource: { type: 'settings', id: 'authorization.sharing-rules' },
+          action: 'read',
+        },
+        navigation: { title: 'sharingRules.title', icon: Share2 },
+        breadcrumb: { title: 'sharingRules.title' },
+        componentLoader: () => import('./sharing-rules.js'),
+        children: [
+          {
+            name: 'settingsSharingRuleCreate',
+            path: 'create',
+            authz: {
+              resource: { type: 'settings', id: 'authorization.sharing-rules' },
+              action: 'create',
+            },
+            breadcrumb: { title: 'sharingRules.new' },
+            presentation: { kind: 'child-page' },
+            componentLoader: () => import('./sharing-rule-form.js'),
+          },
+          {
+            name: 'settingsSharingRuleEdit',
+            path: ':key/edit',
+            breadcrumb: { title: 'sharingRules.edit' },
+            presentation: { kind: 'child-page' },
+            componentLoader: () => import('./sharing-rule-form.js'),
           },
         ],
       },

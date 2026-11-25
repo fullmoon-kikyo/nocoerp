@@ -36,7 +36,13 @@ pnpm dev
 
 This learning application uses PostgreSQL, with the selected driver in production dependencies. Its independent development database runs through `compose.postgres.yml` on `127.0.0.1:5434`, database `nocoerp`, application role `nocoerp_app`.
 
-Start the database and then the application from this directory:
+Start the database and application with the root-level development script:
+
+```bash
+./start.sh
+```
+
+The script works from any current directory when invoked by its full path. It checks local prerequisites, starts PostgreSQL and waits for it to become healthy, then runs the application's development command using the pnpm version pinned in `package.json`. It keeps the terminal attached to the application logs. Use `./start.sh --help` for usage. The equivalent manual commands are:
 
 ```bash
 docker compose -p nocoerp-app -f compose.postgres.yml up -d --wait
@@ -461,6 +467,30 @@ Replace `/main` with the application's `APP_BASE_PATH`. An application without t
 
 MIT
 
+## 共享规则管理
+
+管理员在「系统设置 → 权限管理 → 共享规则」查看、创建、编辑或撤销共享。路由名为 `settingsSharingRules`，路径为 `/settings/sharing-rules`；功能指南已有同名入口映射，无需另建菜单。
+
+物料主数据模块已注册类别与物料的操作和数据范围，共享编辑器会从插件受保护的 API 加载这些对象及实际记录。尚未创建业务共享规则；共享给某人之前，需先明确其业务操作权限、相关类别范围和接收对象。
+
+创建时选择业务对象，为每个操作的数据范围选择具体记录或受支持的范围，逐一核对接收对象并填写共享原因。接收对象来自实际目录，不提供「所有登录用户」；当前仅有人员目录，团队需要业务模块注册团队目录和有效成员解析器后才会出现。指定记录按集合分别选择，跨页选择会保留。
+
+共享管理的读取、新建、编辑、撤销权限分别对应 `settings:authorization.sharing-rules` 的 `read/create/update/delete`，可以在角色编辑器配置。人员目录额外要求用户管理的读取权限；仅能读共享规则的角色不会因此获得人员目录或写权限。
+
+共享只扩大接收者已有操作权限下的数据范围，不授予页面、字段或操作权限，不自动共享关联记录，且仍受限制规则约束。撤销某条规则保留其他规则和独立授权来源。编辑器只提交实际修改的属性；不可识别的操作或范围保持只读。编辑、撤销前会检查规则是否变更并要求重新加载。当前插件没有版本条件更新接口，这项检查不能保证同时写入时的原子冲突检测。
+
+验收使用隔离数据库中的合成账号与业务数据，覆盖规则创建、编辑、撤销、其他规则保留、普通账号的页面/API 拒绝、操作权限前提、限制规则叠加、关联范围及撤销后其他来源；这些测试不会向本机开发数据库写入样例。
+
+## 物料主数据
+
+入口为左侧「物料管理 → 主数据管理」，路径 `/materials/master-data`。桌面显示左侧类别树和右侧物料表格；手机使用可折叠类别选择和物料卡片。类别支持新增顶级或下级，选择父类别会同时显示其下级类别的物料。新增物料会带入当前选择的类别，也可以在表单中更改；物料支持查看、编辑、搜索和分页。
+
+本轮字段为物料编码、名称、类别、规格型号、图号、计量单位、材质、备注和启用标记。编码由用户手工填写，去除首尾空格后以数据库唯一约束校验；分类编码同样保持唯一。单位目前是必填文本，本轮没有数量换算、供应策略、库存、BOM 或 MRP。组织及工厂归属需在组织模块确定后再接入，不假定全体人员共享业务数据。
+
+数据表为 `md_material_categories` 和 `md_materials`，类别父子关系及物料类别引用使用真实外键。记录保存创建人、修改人及时间，物料使用 Core 的版本检查处理并发编辑；自定义写接口接入 Core 提交回执，同一操作重试不会创建重复记录。类别管理现已扩展，详见下节；物料仍不提供物理删除。
+
+现有管理员可使用此功能。初始化预置「物料管理员」和「物料查看员」角色，保留已有角色配置，不自动分配给任何账号，也不修改 `member`。管理员可在现有用户管理中明确分配；角色编辑器可分别设置页面访问、查看类别、新增类别、查看物料、新增物料、编辑物料及各自的数据范围。仅有页面权限不能调用业务接口；物料写入还会检查目标类别是否可访问。
+
 ## Runtime paths and application creation
 
 `runtime.paths`, configuration context `paths`, and `app.paths` share one resolved `AppPaths` object. Use `paths.storage('...')`, `paths.database('...')`, or the corresponding directory fields. `AppPathOptions` is input only; application path policies run before the final object is created and configuration is loaded. Standalone entries declare the deployment root in `server/runtime.ts` so the server and CLI share persistent storage outside the compiled code directory. That storage is `storage/` under the deployment root unless `APP_STORAGE_DIR` names another directory, absolute or relative to the deployment root; set it when the deployment root itself is replaced on every release, as an installer that keeps one directory per release does.
@@ -480,3 +510,13 @@ The application can also be the root of a pnpm workspace, with internal packages
 Password registration signs in new accounts by default (`auth.emailAndPassword.autoSignIn: true` in `server/config/auth.ts` and `config.example.yml`). An existing email returns an explicit error, exposing whether that email is registered. For enumeration protection, explicitly set `autoSignIn: false` and configure email verification with a sender or `onExistingUserSignUp` to notify the email owner. Existing explicit overrides remain effective; no configuration migration is performed. The authentication plugin warns at startup about registration with auto sign-in disabled and neither verification nor an existing-user notification.
 
 The registration page treats `usePasswordRegistration().isSuccess` as request acceptance only. A refreshed session navigates signed-in users into the application. Visitors who remain signed out see neutral sign-in and recovery guidance, without an account-creation or email-delivery promise. Applications customizing this page must keep that distinction.
+
+## 物料分类
+
+入口为「物料管理 → 物料分类」，路径 `/materials/categories`。树、工具栏和详情卡适配自 NocoITAM「主数据 → 位置」模板；沿用现有分类集合，支持新增、行内或弹窗编辑、拖动排序与移动、搜索、关联物料和子分类页签。手机使用完整路径选择器及可折叠分类树，移动操作有触屏和键盘入口。
+
+导入支持 UTF-8 CSV 模板、逐行校验预览和整批原子提交（500 行 / 512 KiB），按类别编码关联上级，仅新增、不覆盖。导出按当前搜索条件补全有权限的祖先，带 BOM、正确转义和公式前缀保护。历史随真实分类修改在同一事务中记录；既有分类保留原始创建时间和身份。纯文本评论支持回复，作者可编辑和移除正文，回复线程保留。
+
+新增未分配的「物料分类管理员」「物料分类查看员」角色；旧角色及分配不变。页面访问、分类操作和各操作的数据范围分别配置，关联物料仍须独立的物料查看权限。删除受子分类、物料引用和数据库外键保护；并发编辑使用版本校验，树移动串行校验防环，写操作使用 Core 提交回执。
+
+此适配保留当前应用品牌与主题，位置字段及设备等页签换成物料分类领域内容，不覆盖 NocoITAM 的认证、权限和业务数据。设计与验收要求见 [物料分类设计](docs/ui/pages/material-categories.md)，第三方许可见 [来源说明](THIRD_PARTY_NOTICES.md)。

@@ -1,9 +1,9 @@
+import { categoryEnUS } from '../../shared/category-locales.js';
 import type { LocaleResource } from '@nocobase/i18n';
+import { materialEnUS } from '../../shared/material-locales.js';
 
-// The application's own server-side wording. It is empty because every string the server produces today belongs to a
-// plugin's namespace; add keys here as the application starts producing its own, and use `overrides` to reword a
-// plugin's.
-const enUS = {};
+// Keep business permission labels aligned with the application's client wording.
+const enUS = { categoryManagement: categoryEnUS, materials: materialEnUS };
 
 export type AppServerResource = LocaleResource<typeof enUS>;
 

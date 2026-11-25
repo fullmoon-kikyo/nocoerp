@@ -5,7 +5,6 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
-import systemSettingsRoutes from '../../client/pages/settings/routes.js';
 import applicationRoutes, {
   createApplicationRoutes,
 } from '../../client/routes.ts';
@@ -189,28 +188,20 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
-      { name: 'settingsHome', authorizedAs: null },
-      { name: 'databaseExplorer', authorizedAs: 'database-explorer' },
-    ]);
-  });
-
-  it('includes database browsing and supports business settings registration', async () => {
-    // The built-in database browser joins the settings home without enabling business administration.
-    expect(
-      pagePaths(resolveRoutes().routes).filter((path) =>
-        path.startsWith('/settings'),
-      ),
-    ).toEqual(['/settings', '/settings/database-explorer']);
-    const built = resolveAppClientContributions([
-      {
-        packageName: '@nocobase/app-template-default',
-        routes: [...applicationRoutes, systemSettingsRoutes],
-        source: 'application',
-      },
-    ]);
-    expect(pageAuthorizations(built.routes)).toEqual([
-      { name: 'home', authorizedAs: null },
-      { name: 'inbox', authorizedAs: null },
+      ...[
+        'materialCategories',
+        'categoryMaterialDetail',
+        'categoryManagementCreate',
+        'categoryManagementEdit',
+        'categoryManagementMove',
+        'categoryManagementImport',
+      ].map((name) => ({ name, authorizedAs: 'materials.categories' })),
+      ...[
+        'materialMasterData',
+        'materialCreate',
+        'materialEdit',
+        'materialCategoryCreate',
+      ].map((name) => ({ name, authorizedAs: 'materials.master-data' })),
       { name: 'settingsHome', authorizedAs: null },
       { name: 'settingsUsers', authorizedAs: 'user:*' },
       { name: 'settingsUserCreate', authorizedAs: 'user:*' },
@@ -236,7 +227,41 @@ describe('app client routes', () => {
         name,
         authorizedAs: 'settings:authorization.default-access',
       })),
+      ...[
+        'settingsSharingRules',
+        'settingsSharingRuleCreate',
+        'settingsSharingRuleEdit',
+      ].map((name) => ({
+        name,
+        authorizedAs: 'settings:authorization.sharing-rules',
+      })),
       { name: 'databaseExplorer', authorizedAs: 'database-explorer' },
+    ]);
+  });
+
+  it('registers account administration once inside the existing settings shell', async () => {
+    const built = resolveRoutes();
+    expect(
+      built.routes.filter((route) => route.name === 'settings'),
+    ).toHaveLength(1);
+    expect(
+      pagePaths(built.routes).filter((path) => path.startsWith('/settings')),
+    ).toEqual([
+      '/settings',
+      '/settings/users',
+      '/settings/users/create',
+      '/settings/users/:userId',
+      '/settings/users/:userId/edit',
+      '/settings/roles',
+      '/settings/roles/create',
+      '/settings/roles/:key/edit',
+      '/settings/default-access',
+      '/settings/default-access/create',
+      '/settings/default-access/:key/edit',
+      '/settings/sharing-rules',
+      '/settings/sharing-rules/create',
+      '/settings/sharing-rules/:key/edit',
+      '/settings/database-explorer',
     ]);
     for (const loader of componentLoadersIn(built.routes))
       await expect(loader()).resolves.toMatchObject({

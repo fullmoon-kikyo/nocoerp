@@ -5,6 +5,11 @@ import type { PagePermissionTitles } from './page-permissions.js';
  * Do not add navigation/breadcrumbs or change authorization ids just to name a permission.
  */
 export const pagePermissionTitles: PagePermissionTitles = {
+  categoryManagementCreate: 'categoryManagement.create',
+  categoryManagementEdit: 'categoryManagement.edit',
+  categoryManagementMove: 'categoryManagement.move',
+  categoryManagementImport: 'categoryManagement.import',
+  materialCategoryCreate: 'materials.newCategory',
   // The template detail drawer shares the list page grant.
   notificationTemplate: 'settings.notificationTemplates',
 };

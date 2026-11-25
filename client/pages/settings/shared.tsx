@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { useTranslation } from '@nocobase/i18n/client';
 import type { ReactElement, ReactNode } from 'react';
 import { Button } from '#components/ui/button';
+import { PendingButton } from '#components/pending-button';
 import { Alert, AlertDescription } from '#components/ui/alert';
 import { Skeleton } from '#components/ui/skeleton';
 import {
@@ -122,11 +123,14 @@ export function ConfirmAction({
           <AlertDialogCancel disabled={busy}>
             {t('settings.cancel')}
           </AlertDialogCancel>
-          <Button variant='destructive' disabled={busy} onClick={onConfirm}>
-            {busy
-              ? t('settings.saving')
-              : (confirmLabel ?? t('settings.confirm'))}
-          </Button>
+          <PendingButton
+            variant='destructive'
+            busy={busy}
+            pendingLabel={t('settings.saving')}
+            onClick={onConfirm}
+          >
+            {confirmLabel ?? t('settings.confirm')}
+          </PendingButton>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

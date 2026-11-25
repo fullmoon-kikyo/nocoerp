@@ -109,11 +109,11 @@ export function ruleScopes(
         })),
   );
 }
-export function replaceRuleScope(
-  rule: DefaultAccessRule,
+export function replaceRuleScope<T extends DefaultAccessRule>(
+  rule: T,
   scope: RuleScope,
   selection: ScopeSelection | undefined,
-): DefaultAccessRule {
+): T {
   const existing = rule.actions.find((entry) => actionKey(entry) === scope.id);
   if (JSON.stringify(existing?.selection) === JSON.stringify(selection))
     return rule;
